@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+    version="3.0">
+        
+    <display-name>JBoss ESSC Team Portal</display-name>
+
+    <!-- Enable Wicket -->
+    <filter>
+        <filter-name>Wicket</filter-name>
+        <filter-class>org.apache.wicket.protocol.http.WicketFilter</filter-class>
+        <!-- Specify the "entry point" for Wicket to configure itself from. -->
+        <init-param>
+            <param-name>applicationClassName</param-name>
+            <param-value>org.jboss.essc.web.WicketJavaEEApplication</param-value>
+        </init-param>
+        <init-param>
+            <param-name>ignorePaths</param-name>
+            <param-value>rest/</param-value>
+        </init-param>
+    </filter>
+    
+    <!-- Wicket mode -->
+    <context-param>
+        <param-name>configuration</param-name>
+        <param-value>${wicket.mode}</param-value>
+    </context-param>
+
+    <!-- Have wicket manage the context root -->
+    <filter-mapping>
+        <filter-name>Wicket</filter-name>
+        <url-pattern>/*</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
+        <dispatcher>ERROR</dispatcher> <!-- Let 404 etc go through Wicket. -->
+    </filter-mapping>
+
+    <error-page>
+            <error-code>404</error-code>
+            <location>/404</location>
+    </error-page>
+
+    <servlet>
+        <servlet-name>health</servlet-name>
+        <jsp-file>/health.jsp</jsp-file>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>health</servlet-name>
+        <url-pattern>/health</url-pattern>
+    </servlet-mapping>
+
+    <!-- Two days
+    <session-config>
+        <session-timeout>2880</session-timeout>
+    </session-config>
+    -->
+    
+    <!-- One of the way of activating REST Servises. -->
+    <servlet-mapping>
+        <servlet-name>javax.ws.rs.core.Application</servlet-name>
+        <url-pattern>/rest/*</url-pattern>
+    </servlet-mapping>
+    
+</web-app>

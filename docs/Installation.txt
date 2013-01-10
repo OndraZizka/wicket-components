@@ -1,0 +1,83 @@
+
+
+MySQL setup:
+============
+
+mysql -u root;
+   SHOW DATABASES;
+   SHOW GRANTS;
+   CREATE DATABASE essc DEFAULT CHARACTER SET = 'utf8';
+   GRANT ALL ON essc.* TO essc@'%' IDENTIFIED BY 'essc'; -- Change this.
+   FLUSH PRIVILEGES;
+
+   The tables are currently created by hbm2sql. That will change.
+
+Root context in AS: (for production)
+===================
+
+        <subsystem xmlns="urn:jboss:domain:web:1.2" default-virtual-server="default-host" native="false">
+            <virtual-server name="default-host" enable-welcome-root="false">
+
+Or in the CLI (and restart the server)
+
+        /profile=default/subsystem=web/virtual-server=default-host:write-attribute(name=enable-welcome-root,value=false)
+
+
+Datasource in AS:
+=================
+
+        <subsystem xmlns="urn:jboss:domain:datasources:1.1">
+            <datasources>
+                <datasource jndi-name="java:jboss/datasources/esscDS" pool-name="essc-ds-pool" enabled="true" use-java-context="true">
+                    <connection-url>jdbc:mysql://localhost:3306/essc?characterEncoding=UTF-8&amp;characterSetResults=UTF-8&amp;autoReconnect=true&amp;zeroDateTimeBehavior=convertToNull</connection-url>
+                    <driver>mysql</driver>
+                    <security>
+                        <user-name>essc</user-name>
+                        <password>essc</password>
+                    </security>
+                </datasource>
+                <drivers>
+                    <driver name="mysql" module="com.mysql.jdbc">
+                        <xa-datasource-class>com.mysql.jdbc.jdbc2.optional.MysqlXADataSource</xa-datasource-class>
+                    </driver>
+                </drivers>
+            </datasources>
+        </subsystem>
+
+
+Mail config in AS:
+==================
+Set SMTP host, user and pass.
+
+            <mail-session jndi-name="java:jboss/mail/Default">
+                <smtp-server outbound-socket-binding-ref="mail-smtp">
+                    <!-- <login name="user" password="pass"/> -->
+                </smtp-server>
+            </mail-session>
+
+        <outbound-socket-binding name="mail-smtp">
+            <remote-destination host="mail.upcmail.cz" port="25"/>
+        </outbound-socket-binding>
+
+Security config in AS (devel purposes):
+=======================================
+
+        <subsystem xmlns="urn:jboss:domain:security:1.2">
+            <security-domains>
+                <security-domain name="example-domain">
+                    <authentication>
+                        <login-module code="UsersRoles" flag="required">
+                            <module-option name="usersProperties" value="${jboss.server.config.dir}/example-users.properties"/>
+                            <module-option name="rolesProperties" value="${jboss.server.config.dir}/example-roles.properties"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+                <security-domain name="db-domain">
+                    <authentication>
+                        <login-module code="Database" flag="required">
+                            <module-option name="dsJndiName" value="java:jboss/datasources/MysqlDS"/>
+                            <module-option name="principalsQuery" value="SELECT pass FROM users WHERE name=?"/>
+                            <module-option name="rolesQuery" value="SELECT role, 'Roles' AS roleGroup FROM users_roles WHERE name=?"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
